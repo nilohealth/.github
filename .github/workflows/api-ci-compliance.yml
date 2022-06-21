@@ -1,0 +1,112 @@
+name: Github CI
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        required: true
+        type: string
+    secrets:
+      pypi_password:
+        required: true
+
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10.x'
+
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      run: |
+        make dependencies
+      env:
+        NILO_PYPI_PASSWORD: ${{ secrets.pypi_password }}
+
+    - name: Lint with pylint
+      run: |
+        make lint
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10.x'
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        run: |
+          make dependencies
+        env:
+          NILO_PYPI_PASSWORD: ${{ secrets.pypi_password }}
+
+      - name: Check vulnerabilities
+        run: |
+          make check
+
+  unit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ${{inputs.app_name}}
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10.x'
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        run: |
+          make dependencies
+        env:
+          NILO_PYPI_PASSWORD: ${{ secrets.pypi_password }}
+
+      - name: Unit test with Django test suite
+        run: |
+          make unit
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{inputs.app_name}}
+          LOG_LEVEL: ERROR
+
+      - name: Report Coverage
+        run: |
+          pip3 install --upgrade coveralls coverage[toml]
+          coveralls --service=github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

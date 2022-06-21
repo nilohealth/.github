@@ -1,0 +1,6 @@
+{
+    "name": "Nilo API - CI",
+    "description": "Test a backend Nilo API",
+    "iconName": "django",
+    "categories": ["Continuous integration", "Python", "Django", "Poetry"]
+}

@@ -1,0 +1,8 @@
+name: Github CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  api-ci-compliance:
+    uses: nilohealth/.github/workflows/api-ci-compliance.yml
