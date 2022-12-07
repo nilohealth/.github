@@ -6,6 +6,10 @@ on:
       app_name:
         required: true
         type: string
+      python_version:
+        required: false
+        type: string
+        default: '3.10.x'
     secrets:
       pypi_password:
         required: true
@@ -15,12 +19,12 @@ jobs:
   linter:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.10.x'
+        python-version: ${{inputs.python_version}}
 
     - name: Cache dependencies
       uses: actions/cache@v2
@@ -41,12 +45,12 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10.x'
+          python-version:  ${{inputs.python_version}}
 
       - name: Cache dependencies
         uses: actions/cache@v2
@@ -78,12 +82,12 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10.x'
+          python-version: ${{inputs.python_version}}
 
       - name: Cache dependencies
         uses: actions/cache@v2
@@ -102,7 +106,7 @@ jobs:
           sudo locale-gen pt_BR.UTF-8
           sudo update-locale LANG=pt_BR.UTF-8
 
-      - name: Unit test with Django test suite
+      - name: Unit test
         run: |
           make unit
         env:
