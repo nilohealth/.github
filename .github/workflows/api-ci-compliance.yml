@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:13
+        image: postgres:14
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -100,7 +100,7 @@ jobs:
           make dependencies
         env:
           NILO_PYPI_PASSWORD: ${{ secrets.pypi_password }}
-      
+
       - name: Installing locale
         run: |
           sudo locale-gen pt_BR.UTF-8
@@ -113,9 +113,42 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{inputs.app_name}}
           LOG_LEVEL: ERROR
 
-      - name: Report Coverage
+      - name: Generage coverage reports
         run: |
-          pip3 install --upgrade coveralls coverage[toml]
-          coveralls --service=github
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          poetry run coverage json
+          poetry run coverage html
+
+      - uses: 'google-github-actions/auth@v1'
+        with:
+          service_account: 'github@nilo-devops.iam.gserviceaccount.com'
+          credentials_json: ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+
+      - uses: 'google-github-actions/setup-gcloud@v1'
+
+      - name: Upload coverage
+        run: |
+          gcloud storage cp ./coverage.json gs://nilo-devops--coverage/${{ github.repository }}/${{ github.sha }}/coverage.json
+          # gcloud storage cp --recursive ./htmlcov/ gs://nilo-devops--coverage/${{ github.repository }}/${{ github.sha }}/
+
+      - name: Run coverage check
+        if: github.event_name == 'pull_request'
+        run: |
+          set -x
+          set -e
+          REPO_NAME=`echo ${{ github.repository }} | sed 's=${{ github.repository_owner }}/=='`
+          curl \
+            --request POST \
+            https://us-east1-nilo-devops.cloudfunctions.net/code-guardian/coverage \
+            --header 'content-type: application/json' \
+              --data '{
+                "organization": {
+                  "login": "${{ github.repository_owner }}"
+                },
+                "repository": {
+                  "name": "'$REPO_NAME'"
+                },
+                "pull_request": {
+                    "number": "${{ github.event.number }}"
+                }
+              }'
+
