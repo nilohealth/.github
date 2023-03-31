@@ -13,6 +13,8 @@ on:
     secrets:
       pypi_password:
         required: true
+      gcp_artifact_password:
+        required: true
 
 
 jobs:
@@ -121,7 +123,7 @@ jobs:
       - uses: 'google-github-actions/auth@v1'
         with:
           service_account: 'github@nilo-devops.iam.gserviceaccount.com'
-          credentials_json: ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          credentials_json: ${{ secrets.gcp_artifact_password }}
 
       - uses: 'google-github-actions/setup-gcloud@v1'
 
