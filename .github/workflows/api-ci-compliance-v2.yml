@@ -1,0 +1,153 @@
+name: Github CI
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        required: true
+        type: string
+      python_version:
+        required: false
+        type: string
+        default: '3.11.x'
+    secrets:
+      gcp_artifact_password:
+        required: true
+
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install poetry
+      run: pipx install poetry
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{inputs.python_version}}
+        cache: poetry
+
+    - name: Install dependencies
+      run: |
+        poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
+        poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+        make dependencies
+
+    - name: Lint with pylint
+      run: |
+        make lint
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{inputs.python_version}}
+          cache: poetry
+
+      - name: Install dependencies
+        run: |
+          poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
+          poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          make dependencies
+
+      - name: Check vulnerabilities
+        run: |
+          make check
+
+  unit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ${{inputs.app_name}}
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{inputs.python_version}}
+          cache: poetry
+
+      - name: Install dependencies
+        run: |
+          poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
+          poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          make dependencies
+
+      - name: Installing locale
+        run: |
+          sudo locale-gen pt_BR.UTF-8
+          sudo update-locale LANG=pt_BR.UTF-8
+
+      - name: Unit test
+        run: |
+          make unit
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{inputs.app_name}}
+          LOG_LEVEL: ERROR
+
+      - name: Generage coverage reports
+        run: |
+          poetry run coverage json
+          poetry run coverage html
+
+      - uses: 'google-github-actions/auth@v1'
+        with:
+          service_account: 'github@nilo-devops.iam.gserviceaccount.com'
+          credentials_json: ${{ secrets.gcp_artifact_password }}
+
+      - uses: 'google-github-actions/setup-gcloud@v1'
+
+      - name: Upload coverage
+        run: |
+          if [[ "${{ github.event.pull_request.head.sha }}" == "" ]]
+          then
+            SHA="${{ github.sha }}"
+          else
+            SHA="${{ github.event.pull_request.head.sha }}"
+          fi
+          gcloud storage cp ./coverage.json gs://nilo-devops--coverage/${{ github.repository }}/${SHA}/coverage.json
+          # gcloud storage cp --recursive ./htmlcov/ gs://nilo-devops--coverage/${{ github.repository }}/${SHA}/
+
+      - name: Run coverage check
+        if: github.event_name == 'pull_request'
+        run: |
+          set -x
+          set -e
+          REPO_NAME=`echo ${{ github.repository }} | sed 's=${{ github.repository_owner }}/=='`
+          curl \
+            --request POST \
+            https://us-east1-nilo-devops.cloudfunctions.net/code-guardian/coverage \
+            --header 'content-type: application/json' \
+              --data '{
+                "organization": {
+                  "login": "${{ github.repository_owner }}"
+                },
+                "repository": {
+                  "name": "'$REPO_NAME'"
+                },
+                "pull_request": {
+                    "number": "${{ github.event.number }}"
+                }
+              }'
