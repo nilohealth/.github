@@ -8,9 +8,9 @@ on:
         type: string
         default: '3.11.x'
     secrets:
-      github_token:
-        required: true
       gcp_artifact_password:
+        required: true
+      gh_token:
         required: true
 
 
@@ -50,12 +50,12 @@ jobs:
         if: ${{ steps.versioning.outputs.should_release == 'true' }}
         run: gh release create ${{ steps.versioning.outputs.package_version }} --generate-notes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.gh_token }}
       - name: Build & Publish package
         if: ${{ steps.versioning.outputs.should_release == 'true' }}
         run: |
           poetry config repositories.nilo https://us-east1-python.pkg.dev/nilo-${{ steps.versioning.outputs.pypi_env }}/python-libs
-          poetry config http-basic.nilo _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          poetry config http-basic.nilo _json_key_base64 ${{ secrets.gcp_artifact_password }}
           poetry publish --build -r nilo
         env:
           PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
