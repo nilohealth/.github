@@ -32,7 +32,7 @@ jobs:
         id: versioning
         run: |
           package_version=$(poetry version -s)
-          echo "package_version=package_version" >> $GITHUB_OUTPUT
+          echo "package_version=$package_version" >> $GITHUB_OUTPUT
           upgraded=$(git tag --list | grep -q "${package_version}$" && echo "false" || echo "true")
           echo "upgraded=$upgraded" >> $GITHUB_OUTPUT
           pre_release=$([[ $package_version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && echo "false" || echo "true")
