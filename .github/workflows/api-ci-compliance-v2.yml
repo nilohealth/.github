@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Install poetry
       run: pipx install poetry
 
@@ -34,6 +34,7 @@ jobs:
       run: |
         poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
         poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+        poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
         make dependencies
 
     - name: Lint with pylint
@@ -58,6 +59,7 @@ jobs:
         run: |
           poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
           poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
           make dependencies
 
       - name: Check vulnerabilities
@@ -93,6 +95,7 @@ jobs:
         run: |
           poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
           poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
           make dependencies
 
       - name: Installing locale
