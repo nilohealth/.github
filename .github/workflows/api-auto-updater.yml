@@ -27,8 +27,11 @@ jobs:
         with:
           python-version: ${{inputs.python_version}}
           cache: poetry
-      - name: Install release dependencies
-        run: make setup
+      - name: Install dependencies
+        run: |
+          poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
+          poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
       - name: Update dependencies
         run: make update
       - name: Create Pull Request
