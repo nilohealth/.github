@@ -39,8 +39,8 @@ jobs:
           echo "pre_release=$pre_release" >> $GITHUB_OUTPUT
           pypi_env=$([[ $pre_release =~ "true" ]] && echo "dev" || echo "prd")
           echo "pypi_env=$pypi_env" >> $GITHUB_OUTPUT
-          main_branch_release=$([[ $pre_release =~ "false" && $GITHUB_REF_NAME =~ "main" ]] && echo "true" || echo "false")
-          alternative_branch_release=$([[ $pre_release =~ "true" && $GITHUB_REF_NAME != "main" ]] && echo "true" || echo "false")
+          main_branch_release=$([[ $pre_release =~ "false" && $GITHUB_REF_NAME =~ "^main$" ]] && echo "true" || echo "false")
+          alternative_branch_release=$([[ $pre_release =~ "true" && ! $GITHUB_REF_NAME =~ "^main$" ]] && echo "true" || echo "false")
           should_release=$([[ $upgraded =~ "true" && ($main_branch_release =~ "true" || $alternative_branch_release =~ "true") ]] && echo "true" || echo "false")
           echo "should_release=$should_release" >> $GITHUB_OUTPUT
           echo "upgraded=$upgraded"
