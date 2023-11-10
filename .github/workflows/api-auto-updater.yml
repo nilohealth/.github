@@ -8,7 +8,11 @@ on:
         type: string
         default: '3.11.x'
     secrets:
-      gcp_artifact_password:
+      GCP_ARTIFACT_PASSWORD:
+        required: true
+      NILO_BOT_APP_ID:
+        required: true
+      NILO_BOT_PRIVATE_KEY:
         required: true
 
 
