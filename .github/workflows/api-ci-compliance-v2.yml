@@ -30,6 +30,11 @@ jobs:
         python-version: ${{inputs.python_version}}
         cache: poetry
 
+    - name: Install gettext for translations
+      run: |
+        sudo apt-get update
+        sudo apt-get install gettext
+
     - name: Install dependencies
       run: |
         poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
@@ -54,6 +59,11 @@ jobs:
         with:
           python-version: ${{inputs.python_version}}
           cache: poetry
+
+      - name: Install gettext for translations
+        run: |
+          sudo apt-get update
+          sudo apt-get install gettext
 
       - name: Install dependencies
         run: |
@@ -90,6 +100,11 @@ jobs:
         with:
           python-version: ${{inputs.python_version}}
           cache: poetry
+
+      - name: Install gettext for translations
+        run: |
+          sudo apt-get update
+          sudo apt-get install gettext
 
       - name: Install dependencies
         run: |
