@@ -1,0 +1,136 @@
+name: Github CI
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        required: true
+        type: string
+      python_version:
+        required: false
+        type: string
+        default: '3.11.x'
+    secrets:
+      gcp_artifact_password:
+        required: true
+      cc_test_reporter_id:
+        required: true
+
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install poetry
+      run: pipx install poetry
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{inputs.python_version}}
+        cache: poetry
+
+    - name: Install gettext for translations
+      run: |
+        sudo apt-get update
+        sudo apt-get install gettext
+
+    - name: Install dependencies
+      run: |
+        poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
+        poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+        poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+        make dependencies
+
+    - name: Lint with pylint
+      run: |
+        make lint
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{inputs.python_version}}
+          cache: poetry
+
+      - name: Install gettext for translations
+        run: |
+          sudo apt-get update
+          sudo apt-get install gettext
+
+      - name: Install dependencies
+        run: |
+          poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
+          poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          make dependencies
+
+      - name: Check vulnerabilities
+        run: |
+          make check
+
+  unit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ${{inputs.app_name}}
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{inputs.python_version}}
+          cache: poetry
+
+      - name: Install gettext for translations
+        run: |
+          sudo apt-get update
+          sudo apt-get install gettext
+
+      - name: Install dependencies
+        run: |
+          poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
+          poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+          make dependencies
+
+      - name: Installing locale
+        run: |
+          sudo locale-gen pt_BR.UTF-8
+          sudo update-locale LANG=pt_BR.UTF-8
+
+      - name: Unit test
+        run: |
+          make unit
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{inputs.app_name}}
+          LOG_LEVEL: ERROR
+
+      - name: Test & publish code coverage
+        uses: paambaati/codeclimate-action@v5.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        with:
+          coverageCommand: poetry run coverage xml
+          debug: true
