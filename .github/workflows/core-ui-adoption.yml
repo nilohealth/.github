@@ -1,0 +1,57 @@
+name: core-ui-adoption
+on:
+  workflow_call:
+    inputs:
+      scan_path:
+        type: string
+        required: false
+        default: "."
+    outputs:
+      core_ui_components:
+        description: "Number of core-ui components"
+        value: ${{ jobs.get_adoption.outputs.core_ui_components }}
+      core_ui_v2_components:
+        description: "Number of core-ui-v2 components"
+        value: ${{ jobs.get_adoption.outputs.core_ui_v2_components }}
+
+jobs:
+  get_adoption:
+    runs-on: ubuntu-latest
+
+    env:
+      NILO_GITHUB_TOKEN: ${{ secrets.NILO_GITHUB_TOKEN }}
+
+    outputs:
+      core_ui_components: ${{ steps.adoption.outputs.core_ui_components }}
+      core_ui_v2_components: ${{ steps.adoption.outputs.core_ui_v2_components }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.17.0
+
+      - name: Create temp file
+        id: mktemp
+        run: echo "tempfile=$(mktemp)" >> $GITHUB_OUTPUT
+
+      - name: Run scan
+        run: npx @nilohealth/core-ui-adoption@latest --output ${{ steps.mktemp.outputs.tempfile }}
+
+      - name: Set outputs
+        id: adoption
+        run: |
+          echo "core_ui_components=$(jq -r '.["@nilohealth/core-ui"].["total"]' ${{ steps.mktemp.outputs.tempfile }})" >> $GITHUB_OUTPUT
+          echo "core_ui_v2_components=$(jq -r '.["@nilohealth/core-ui-v2"].["total"]' ${{ steps.mktemp.outputs.tempfile }})" >> $GITHUB_OUTPUT
+
+      - name: Step summary
+        run: |
+          echo "## Core UI Adoption Summary" >> $GITHUB_STEP_SUMMARY
+          echo " " >> $GITHUB_STEP_SUMMARY
+          echo "### Numeber of component instances:" >> $GITHUB_STEP_SUMMARY
+          echo " " >> $GITHUB_STEP_SUMMARY
+          echo " - @nilohealth/core-ui: ${{ steps.adoption.outputs.core_ui_components }}" >> $GITHUB_STEP_SUMMARY
+          echo " - @nilohealth/core-ui-v2: ${{ steps.adoption.outputs.core_ui_v2_components }}" >> $GITHUB_STEP_SUMMARY
