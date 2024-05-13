@@ -6,7 +6,7 @@ on:
       python_version:
         required: false
         type: string
-        default: '3.11.x'
+        default: '3.12.x'
     secrets:
       gcp_artifact_password:
         required: true
