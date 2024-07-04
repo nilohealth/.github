@@ -122,7 +122,7 @@ jobs:
         run: |
           make unit
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/${{inputs.app_name}}
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/${{inputs.app_name}}
           LOG_LEVEL: ERROR
 
       - name: Generage coverage reports
