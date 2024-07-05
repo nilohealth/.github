@@ -9,7 +9,7 @@ on:
       python_version:
         required: false
         type: string
-        default: '3.11.x'
+        default: '3.12.x'
     secrets:
       gcp_artifact_password:
         required: true
@@ -79,7 +79,8 @@ jobs:
           make check
 
   unit:
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: '16-core-runner'
     services:
       postgres:
         image: postgres:15
