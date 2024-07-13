@@ -146,8 +146,11 @@ jobs:
             SHA="${{ github.event.pull_request.head.sha }}"
           fi
           gcloud storage cp ./coverage.json gs://nilo-devops--coverage/${{ github.repository }}/${SHA}/coverage.json
-          # gcloud storage cp --recursive ./htmlcov/ gs://nilo-devops--coverage/${{ github.repository }}/${SHA}/
 
+          if [ -d ./htmlcov/ ]; then
+            gcloud storage cp --recursive ./htmlcov/ gs://nilo-devops--coverage/${{ github.repository }}/${SHA}/
+          fi
+          
       - name: Run coverage check
         if: github.event_name == 'pull_request'
         run: |
