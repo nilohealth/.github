@@ -37,6 +37,10 @@ jobs:
           poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
       - name: Update dependencies
         run: make update
+      - name: Generate migrations
+        run: make makemigrations
+      - name: Run linter
+        run: make style
       - uses: tibdex/github-app-token@v1
         id: generate-token
         with:
