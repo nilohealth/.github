@@ -38,7 +38,7 @@ jobs:
       - name: Update dependencies
         run: make update
       - name: Generate migrations
-        run: make makemigrations
+        run: make make_migrations
       - name: Run linter
         run: make style
       - uses: tibdex/github-app-token@v1
