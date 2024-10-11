@@ -38,7 +38,12 @@ jobs:
       - name: Update dependencies
         run: make update
       - name: Generate migrations
-        run: make make_migrations
+        run: |
+          if grep -q "^migrations:" Makefile; then
+            make migrations
+          elif grep -q "^make_migrations:" Makefile; then
+            make make_migrations
+          fi
       - name: Run linter
         run: make style
       - uses: tibdex/github-app-token@v1
