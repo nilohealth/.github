@@ -9,7 +9,7 @@ on:
       python_version:
         required: false
         type: string
-        default: '3.12.x'
+        default: '3.12'
     secrets:
       gcp_artifact_password:
         required: true
@@ -21,46 +21,15 @@ jobs:
   linter:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Install poetry
-      run: pipx install poetry
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{inputs.python_version}}
-        cache: poetry
-
-    - name: Install gettext for translations
-      run: |
-        sudo apt-get update
-        sudo apt-get install gettext
-
-    - name: Install dependencies
-      run: |
-        poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
-        poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
-        poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
-        make dependencies
-
-    - name: Lint with pylint
-      run: |
-        make lint
-
-  security:
-    runs-on: ubuntu-latest
-    steps:
       - uses: actions/checkout@v4
 
-      - name: Install poetry
-        run: pipx install poetry
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: ${{inputs.python_version}}
-          cache: poetry
+          enable-cache: true
+
+      - name: Set up Python ${{ inputs.python_version }}
+        run: uv python install ${{ inputs.python_version }}
 
       - name: Install gettext for translations
         run: |
@@ -68,15 +37,38 @@ jobs:
           sudo apt-get install gettext
 
       - name: Install dependencies
-        run: |
-          poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
-          poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
-          poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
-          make dependencies
+        run: make dependencies
+        env:
+          UV_INDEX_NILO_PYPI_PASSWORD: ${{ secrets.GCP_ARTIFACT_PASSWORD }}
 
-      - name: Check vulnerabilities
+      - name: Lint with pylint
+        run: make lint
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ inputs.python_version }}
+        run: uv python install ${{ inputs.python_version }}
+
+      - name: Install gettext for translations
         run: |
-          make check
+          sudo apt-get update
+          sudo apt-get install gettext
+
+      - name: Install dependencies
+        run: make dependencies
+        env:
+          UV_INDEX_NILO_PYPI_PASSWORD: ${{ secrets.GCP_ARTIFACT_PASSWORD }}
+
+      - name: Lint with pylint
+        run: make check
 
   unit:
     runs-on:
@@ -95,14 +87,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install poetry
-        run: pipx install poetry
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: ${{inputs.python_version}}
-          cache: poetry
+          enable-cache: true
+
+      - name: Set up Python ${{ inputs.python_version }}
+        run: uv python install ${{ inputs.python_version }}
 
       - name: Install gettext for translations
         run: |
@@ -110,11 +101,9 @@ jobs:
           sudo apt-get install gettext
 
       - name: Install dependencies
-        run: |
-          poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
-          poetry config http-basic.nilo-pypi _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
-          poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
-          make dependencies
+        run: make dependencies
+        env:
+          UV_INDEX_NILO_PYPI_PASSWORD: ${{ secrets.GCP_ARTIFACT_PASSWORD }}
 
       - name: Installing locale
         run: |
