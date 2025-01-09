@@ -1,13 +1,13 @@
-This is an auto-generated template. Use the sections below to provide enough context for your Pull Request.
+Este é um modelo gerado automaticamente. Use as seções abaixo para fornecer contexto suficiente para sua Pull Request.
 
-## Context
+## Contexto
 
 ... 
 
-## Issues
+## Problemas
 
 ...
 
-## Solution
+## Solução
 
 ...
