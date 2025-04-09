@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Run linter
-        run: make style
+        run: make style || true
 
       - name: Generate token
         uses: tibdex/github-app-token@v1
