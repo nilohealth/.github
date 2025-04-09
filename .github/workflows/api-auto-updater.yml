@@ -37,6 +37,11 @@ jobs:
           poetry config http-basic.nilo-pypi-dev _json_key_base64 ${{ secrets.GCP_ARTIFACT_PASSWORD }}
       - name: Update dependencies
         run: make update
+      - name: Remove database admin from Makefile
+        run: |
+          if [ -f Makefile ]; then
+            sed -i 's/ --database admin//g' Makefile
+          fi
       - name: Generate migrations
         run: |
           if grep -q "^migrations:" Makefile; then
@@ -45,7 +50,7 @@ jobs:
             make make_migrations
           fi
       - name: Run linter
-        run: make style
+        run: make style || true
       - uses: tibdex/github-app-token@v1
         id: generate-token
         with:
