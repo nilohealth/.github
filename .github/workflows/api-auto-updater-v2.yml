@@ -35,6 +35,12 @@ jobs:
         env:
           UV_INDEX_NILO_PYPI_PASSWORD: ${{ secrets.GCP_ARTIFACT_PASSWORD }}
 
+      - name: Remove database admin from Makefile
+        run: |
+          if [ -f Makefile ]; then
+            sed -i 's/ --database admin//g' Makefile
+          fi
+
       - name: Generate migrations
         run: |
           if grep -q "^migrations:" Makefile; then
