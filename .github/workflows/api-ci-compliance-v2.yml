@@ -106,6 +106,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install gettext
 
+      - name: Install pgvector
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-15-pgvector
+
       - name: Install dependencies
         run: |
           poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
