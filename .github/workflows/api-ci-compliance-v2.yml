@@ -10,6 +10,10 @@ on:
         required: false
         type: string
         default: '3.11.x'
+      postgres_image:
+        required: false
+        type: string
+        default: 'postgres:15'
     secrets:
       gcp_artifact_password:
         required: true
@@ -80,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: pgvector/pgvector:pg15
+        image: ${{inputs.postgres_image}}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
