@@ -13,7 +13,7 @@ on:
       postgres_image:
         required: false
         type: string
-        default: 'postgres:15'
+        default: 'postgres:18'
     secrets:
       gcp_artifact_password:
         required: true
