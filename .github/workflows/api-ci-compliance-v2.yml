@@ -34,11 +34,6 @@ jobs:
         python-version: ${{inputs.python_version}}
         cache: poetry
 
-    - name: Install gettext for translations
-      run: |
-        sudo apt-get update
-        sudo apt-get install gettext
-
     - name: Install dependencies
       run: |
         poetry config repositories.nilo-pypi https://us-east1-python.pkg.dev/nilo-devops/python-nilo
@@ -63,11 +58,6 @@ jobs:
         with:
           python-version: ${{inputs.python_version}}
           cache: poetry
-
-      - name: Install gettext for translations
-        run: |
-          sudo apt-get update
-          sudo apt-get install gettext
 
       - name: Install dependencies
         run: |
@@ -105,10 +95,13 @@ jobs:
           python-version: ${{inputs.python_version}}
           cache: poetry
 
+      # Only Django's compilemessages needs gettext. Checked before `make dependencies`, while the workspace
+      # holds just the repo's own files.
       - name: Install gettext for translations
+        if: hashFiles('**/*.po') != ''
         run: |
           sudo apt-get update
-          sudo apt-get install gettext
+          sudo apt-get install -y gettext
 
       - name: Install dependencies
         run: |

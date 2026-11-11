@@ -31,11 +31,6 @@ jobs:
       - name: Set up Python ${{ inputs.python_version }}
         run: uv python install ${{ inputs.python_version }}
 
-      - name: Install gettext for translations
-        run: |
-          sudo apt-get update
-          sudo apt-get install gettext
-
       - name: Install dependencies
         run: make dependencies
         env:
@@ -56,11 +51,6 @@ jobs:
 
       - name: Set up Python ${{ inputs.python_version }}
         run: uv python install ${{ inputs.python_version }}
-
-      - name: Install gettext for translations
-        run: |
-          sudo apt-get update
-          sudo apt-get install gettext
 
       - name: Install dependencies
         run: make dependencies
@@ -95,10 +85,13 @@ jobs:
       - name: Set up Python ${{ inputs.python_version }}
         run: uv python install ${{ inputs.python_version }}
 
+      # Only Django's compilemessages needs gettext. Checked before `make dependencies`, while the workspace
+      # holds just the repo's own files.
       - name: Install gettext for translations
+        if: hashFiles('**/*.po') != ''
         run: |
           sudo apt-get update
-          sudo apt-get install gettext
+          sudo apt-get install -y gettext
 
       - name: Install dependencies
         run: make dependencies
