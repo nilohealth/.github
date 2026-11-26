@@ -33,7 +33,16 @@ jobs:
         run: |
           package_version=$(poetry version -s)
           echo "package_version=$package_version" >> $GITHUB_OUTPUT
-          upgraded=$(git tag --list | grep -q "${package_version}$" && echo "false" || echo "true")
+          # Asks the remote for the exact tag: the checkout brings no tags, so `git tag --list` was always empty and
+          # every push without a version bump tried to recreate an existing release (422 "tag already exists").
+          # ls-remote exits 2 when the tag is missing; any other failure stops the job instead of reading as new.
+          if git ls-remote --exit-code --tags origin "refs/tags/${package_version}" > /dev/null; then
+            upgraded="false"
+          else
+            status=$?
+            [[ $status -eq 2 ]] || exit $status
+            upgraded="true"
+          fi
           echo "upgraded=$upgraded" >> $GITHUB_OUTPUT
           pre_release=$([[ $package_version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && echo "false" || echo "true")
           echo "pre_release=$pre_release" >> $GITHUB_OUTPUT
